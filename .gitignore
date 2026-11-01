@@ -1,0 +1,8 @@
+# 本机杂项
+.DS_Store
+*.log
+
+# 前后端的本地环境配置
+.env
+.env.*
+!.env.example
