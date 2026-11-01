@@ -119,22 +119,43 @@ async function handleSubmit() {
       return 
     }
   } else {
-    return 
+    const trimmedEmail = email.value.trim()
+    if (trimmedEmail.length > 254) {
+      error.value = '邮箱长度过长'
+      return
+    }
+    
+    const trimmedPassword = password.value.trim()
+    if (trimmedPassword.length < 6 || trimmedPassword.length > 20) {
+      error.value = '密码格式错误'
+      return
+    }
   }
 
   loading.value = true
   try {
-    await axios.post('/api/auth/register', {
+    if (isRegister) {
+      await axios.post('/api/auth/register', {
       nickname: nickname.value.trim(),
       email: email.value,
       password: password.value,
     })
-    //清空输入框并跳转至登录页，（编程式路由导航）
-    password.value = ''
-    confirmPassword.value = ''
-    email.value = ''
-    await router.push('/login')
-    success.value = '注册成功'
+      //清空输入框并跳转至登录页，（编程式路由导航）
+      password.value = ''
+      confirmPassword.value = ''
+      email.value = ''
+      await router.push('/login')
+      success.value = '注册成功'
+    } else {
+      await axios.post('/api/auth/login', {
+        email: email.value,
+        password: password.value,
+      })
+      password.value = ''
+      email.value = ''
+      // 后面的主页面
+      await router.push('')
+    }
   } catch(err) {
     if (axios.isAxiosError(err) && err.response) {
       // data 不为 null/undefined 才读取 message，否则不读取，赋 message 为 undefined
