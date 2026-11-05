@@ -9,6 +9,8 @@ const restoreError = ref('')
 onMounted(async ()=>{
   try {
     await authStore.restoreSession()
+    console.log('恢复后的用户：', authStore.user)
+    
   } catch(err) {
     restoreError.value = '暂时无法确认登录状态，请刷新重试'
   } finally {
