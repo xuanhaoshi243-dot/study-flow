@@ -75,9 +75,12 @@
 import { computed, ref, watch } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+import { useAuthStore } from '../stores/auth'
 
 const route = useRoute()
 const router = useRouter()
+//pinina
+const authStore = useAuthStore()
 const isRegister = computed(() => route.name === 'register')
 
 const nickname = ref('')
@@ -101,9 +104,16 @@ watch(isRegister, () => {
 
 async function handleSubmit() {
   if (loading.value) return
-  // 目前只验收表单展示和切换，真实注册、登录接口留待后续接入。
   error.value = ''
   success.value = ''
+
+  // 邮箱允许清理首尾空白；密码始终保留原值。
+  const trimmedEmail = email.value.trim()
+  if (trimmedEmail.length > 254) {
+    error.value = '邮箱长度过长'
+    return
+  }
+
   if (isRegister.value) {
     const tirmmedNikedName = nickname.value.trim()
     if (tirmmedNikedName.length < 2 || tirmmedNikedName.length > 20) {
@@ -118,26 +128,17 @@ async function handleSubmit() {
       error.value = '两次输入密码不同'
       return 
     }
-  } else {
-    const trimmedEmail = email.value.trim()
-    if (trimmedEmail.length > 254) {
-      error.value = '邮箱长度过长'
-      return
-    }
-    
-    const trimmedPassword = password.value.trim()
-    if (trimmedPassword.length < 6 || trimmedPassword.length > 20) {
-      error.value = '密码格式错误'
-      return
-    }
+  } else if (password.value.length === 0) {
+    error.value = '密码不能为空'
+    return
   }
 
   loading.value = true
   try {
-    if (isRegister) {
+    if (isRegister.value) {
       await axios.post('/api/auth/register', {
       nickname: nickname.value.trim(),
-      email: email.value,
+      email: trimmedEmail,
       password: password.value,
     })
       //清空输入框并跳转至登录页，（编程式路由导航）
@@ -148,11 +149,15 @@ async function handleSubmit() {
       success.value = '注册成功'
     } else {
       await axios.post('/api/auth/login', {
-        email: email.value,
+        email: trimmedEmail,
         password: password.value,
       })
+      await authStore.fetchCurrentUser()
+      console.log(authStore.user)
+      
       password.value = ''
       email.value = ''
+      success.value = '登录成功'
       // 后面的主页面
       await router.push('')
     }
