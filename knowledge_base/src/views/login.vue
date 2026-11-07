@@ -159,7 +159,7 @@ async function handleSubmit() {
       email.value = ''
       success.value = '登录成功'
       // 后面的主页面
-      await router.push('')
+      await router.push('/app/notes')
     }
   } catch(err) {
     if (axios.isAxiosError(err) && err.response) {
