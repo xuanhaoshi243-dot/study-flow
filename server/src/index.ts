@@ -231,6 +231,45 @@ app.get('/api/auth/me', async (req, res) => {
   }
 })
 
+//新建笔记
+app.post('/api/notes', async (req, res) => {
+  const userId = req.session.userId
+  if (!userId) {
+    res.status(401).json({
+      message: '尚未登录',
+    })
+    return
+  }
+
+  const { title, content } = req.body ?? {}
+  if (typeof title !== 'string' || typeof content !== 'string') {
+    res.status(400).json({
+      message: '标题和正文都应为字符串',
+    })
+    return
+  }
+  const trimmedTitle = title.trim()
+  if (trimmedTitle.length === 0 || trimmedTitle.length > 200) {
+    res.status(400).json({
+      message: '标题需要为1～200个字符',
+    })
+    return
+  }
+  try {
+    await pool.execute(
+      'insert into notes (user_id, title, content) values (?, ?, ?)',
+      [userId, trimmedTitle, content]
+    )
+    res.status(201).json({
+      message: '笔记创建成功',
+    })
+  } catch (err) {
+    res.status(500).json({
+      message: '笔记创建失败，请稍后重试',
+    })
+  }
+})
+
 app.use((req, res) => {
   res.status(404).json({
     message: '接口不存在',

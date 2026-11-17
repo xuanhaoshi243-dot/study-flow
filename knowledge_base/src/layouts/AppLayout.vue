@@ -15,6 +15,7 @@ const username = computed(() => authStore.user?.username ?? '')
 const currentHour = ref(new Date().getHours())
 let greetingTimer: number | undefined
 
+
 const greeting = computed(() => {
   const hour = currentHour.value
   if (hour >= 5 && hour < 11) return '早上好'
@@ -52,6 +53,7 @@ function closeMenuWithFocus() {
 }
 
 function handleOutsidePointer(event: PointerEvent) {
+  // event.target 是不是一个 DOM 节点？node是浏览器中的 dom 节点类型,而 contains()需要接收一个 dom 节点类型
   if (event.target instanceof Node && !floatingMenu.value?.contains(event.target)) {
     isMenuOpen.value = false
   }
@@ -66,6 +68,7 @@ watch(
 
 onMounted(() => {
   document.addEventListener('pointerdown', handleOutsidePointer)
+  //currentHour无法自己更新时间，因此组件挂载之后开一个定时器，每分钟更新小时数
   greetingTimer = window.setInterval(() => {
     currentHour.value = new Date().getHours()
   }, 60_000)
@@ -95,6 +98,7 @@ onUnmounted(() => {
 
       <!-- 右侧始终保留独立空间，菜单展开不会盖住内容或改变内容宽度。 -->
       <aside class="navigation-rail" aria-label="导航与外观">
+        <!-- dom的 ref 属性会让 Vue 把这个真实的 div 元素保存到：floatingMenu.value -->
         <div ref="floatingMenu" class="floating-menu">
           <button
             class="theme-button"
@@ -115,6 +119,7 @@ onUnmounted(() => {
             </span>
           </button>
 
+          <!-- isMenuOpen为 true 时，添加is-open类 -->
           <div
             class="navigation-reveal"
             :class="{ 'is-open': isMenuOpen }"
@@ -143,7 +148,6 @@ onUnmounted(() => {
                 >
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path :d="page.icon" /></svg>
                   <span>{{ page.label }}</span>
-                  <span class="upcoming-label">待开发</span>
                 </button>
               </nav>
             </div>
@@ -179,6 +183,7 @@ onUnmounted(() => {
   --sf-selected: #e8eef7;
   --sf-soft: #eef0f3;
   --sf-shadow: 0 8px 28px rgb(36 40 48 / 7%);
+  --sf-menu-width: 112px;
   min-height: 100vh;
   min-height: 100svh;
   background: var(--sf-background);
@@ -203,8 +208,9 @@ onUnmounted(() => {
 .app-shell {
   display: grid;
   /* 两边等宽：主内容相对整个窗口居中，右边留给独立菜单。 */
-  grid-template-columns: minmax(152px, 1fr) minmax(0, 1440px) minmax(152px, 1fr);
-  gap: 16px;
+  grid-template-columns:
+    minmax(var(--sf-menu-width), 1fr) minmax(0, 1600px) minmax(var(--sf-menu-width), 1fr);
+  gap: 16px 20px;
   width: 100%;
   margin: 0 auto;
   padding: 20px 16px 24px;
@@ -261,7 +267,7 @@ onUnmounted(() => {
   min-width: 0;
   min-height: calc(100vh - 96px);
   min-height: calc(100svh - 96px);
-  padding: clamp(24px, 4vw, 40px);
+  padding: clamp(24px, 3vw, 32px);
   border: 1px solid var(--sf-border);
   border-radius: 24px;
   background: var(--sf-surface);
@@ -296,7 +302,7 @@ onUnmounted(() => {
   align-items: flex-end;
   justify-content: flex-end;
   gap: 0;
-  width: 152px;
+  width: var(--sf-menu-width);
   height: 100%;
   margin-left: auto;
 }
@@ -371,16 +377,16 @@ onUnmounted(() => {
 .navigation-item {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 5px;
   min-height: 44px;
   max-width: 100%;
-  padding: 10px;
+  padding: 10px 8px;
   border: 1px solid var(--sf-border);
   border-radius: 24px;
   background: var(--sf-surface);
   color: var(--sf-text);
   font: inherit;
-  font-size: 14px;
+  font-size: 13px;
   text-decoration: none;
   white-space: nowrap;
 }
@@ -409,10 +415,6 @@ onUnmounted(() => {
   cursor: not-allowed;
 }
 
-.upcoming-label {
-  font-size: 11px;
-}
-
 .app-layout svg {
   width: 18px;
   height: 18px;
@@ -422,6 +424,11 @@ onUnmounted(() => {
   stroke-width: 1.7;
   stroke-linecap: round;
   stroke-linejoin: round;
+}
+
+.navigation-item svg {
+  width: 16px;
+  height: 16px;
 }
 
 .round-button svg {
